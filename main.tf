@@ -152,54 +152,54 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
 
 
 
-# resource "aws_lb" "my_lb" {
-#   name               = "test-lb-tf"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = [aws_security_group.scg.id]
-#   subnets = [ aws_subnet.my_sb1, aws_subnet.my_sb2 ]
-#   tags = {
-#     Name="web"
-#   }
-# }
+resource "aws_lb" "my_lb" {
+  name               = "test-lb-tf"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.scg.id]
+  subnets = [ aws_subnet.my_sb1.id, aws_subnet.my_sb2.id]
+  tags = {
+    Name="web"
+  }
+}
 
-# resource "aws_lb_target_group" "tg" {
-#   name     = "tf-example-lb-tg"
-#   port     = 80
-#   protocol = "HTTP"
-#   vpc_id   = aws_vpc.myvpc.id
-#   health_check {
-#     path = "/"
-#     port = 80
-#   }
-# }
+resource "aws_lb_target_group" "tg" {
+  name     = "tf-example-lb-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.myvpc.id
+  health_check {
+    path = "/"
+    port = 80
+  }
+}
 
-# resource "aws_lb_target_group_attachment" "tga1" {
-#   target_group_arn = aws_lb_target_group.tg.arn
-#   target_id        = aws_instance.ec2_1.id
-#   port             = 80
-# }
-# resource "aws_lb_target_group_attachment" "tga2" {
-#   target_group_arn = aws_lb_target_group.tg.arn
-#   target_id        = aws_instance.ec2_2.id
-#   port             = 80
-# }
+resource "aws_lb_target_group_attachment" "tga1" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.ec2_1.id
+  port             = 80
+}
+resource "aws_lb_target_group_attachment" "tga2" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.ec2_2.id
+  port             = 80
+}
 
-# resource "aws_lb_listener" "listen" {
-#   load_balancer_arn = aws_lb.my_lb.arn
-#   port              = "80"
-#   protocol          = "HTTP"
+resource "aws_lb_listener" "listen" {
+  load_balancer_arn = aws_lb.my_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
 
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.tg.arn
-#   }
-# }
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
 
-# output "loadbalancerdns" {
-#     value = aws_lb.my_lb.dns_name
+output "loadbalancerdns" {
+    value = aws_lb.my_lb.dns_name
   
-# }
+}
 
 
 
