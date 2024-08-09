@@ -55,20 +55,20 @@ resource "aws_security_group" "scg" {
     from_port = 22
     to_port = 22
     protocol = "tcp"
-    cidr_blocks = ["0.0.0./0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
   egress {
     from_port = 0
     to_port = 0
     protocol = "-1"
-    cidr_blocks = ["0.0.0./0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
     tags = {
     Name = "Web-sg"
   }
 }
 resource "aws_s3_bucket" "my_bkt" {
-    bucket = mantashaterraformbuckethaiye  
+    bucket = "mantashaterraformbuckethaiye"  
 }
 
 resource "aws_instance" "ec2_1" {
@@ -76,7 +76,7 @@ resource "aws_instance" "ec2_1" {
   instance_type = "t2.micro"
   vpc_security_group_ids = [ aws_security_group.scg.id ]
   subnet_id = aws_subnet.my_sb1.id
-  user_data = base64decode(file(userdata.sh))
+  user_data = base64encode(file("userdata.sh"))
 }
 
 resource "aws_instance" "ec2_2" {
@@ -84,6 +84,6 @@ resource "aws_instance" "ec2_2" {
   instance_type = "t2.micro"
   vpc_security_group_ids = [ aws_security_group.scg.id ]
   subnet_id = aws_subnet.my_sb2.id
-  user_data = base64decode(file(userdata1.sh))
+  user_data = base64encode(file("userdata1.sh"))
 }
 
