@@ -67,4 +67,23 @@ resource "aws_security_group" "scg" {
     Name = "Web-sg"
   }
 }
+resource "aws_s3_bucket" "my_bkt" {
+    bucket = mantashaterraformbuckethaiye  
+}
+
+resource "aws_instance" "ec2_1" {
+  ami = "ami-04a81a99f5ec58529"
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [ aws_security_group.scg.id ]
+  subnet_id = aws_subnet.my_sb1.id
+  user_data = base64decode(file(userdata.sh))
+}
+
+resource "aws_instance" "ec2_2" {
+  ami = "ami-04a81a99f5ec58529"
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [ aws_security_group.scg.id ]
+  subnet_id = aws_subnet.my_sb2.id
+  user_data = base64decode(file(userdata1.sh))
+}
 
