@@ -77,6 +77,7 @@ resource "aws_instance" "ec2_1" {
   vpc_security_group_ids = [ aws_security_group.scg.id ]
   subnet_id = aws_subnet.my_sb1.id
   user_data = base64encode(file("userdata.sh"))
+  iam_instance_profile  = aws_iam_instance_profile.ec2_instance_profile.name
 }
 
 resource "aws_instance" "ec2_2" {
@@ -85,54 +86,120 @@ resource "aws_instance" "ec2_2" {
   vpc_security_group_ids = [ aws_security_group.scg.id ]
   subnet_id = aws_subnet.my_sb2.id
   user_data = base64encode(file("userdata1.sh"))
+  iam_instance_profile  = aws_iam_instance_profile.ec2_instance_profile.name
 }
 
-resource "aws_lb" "my_lb" {
-  name               = "test-lb-tf"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.scg.id]
-  subnets = [ aws_subnet.my_sb1, aws_subnet.my_sb2 ]
+# Create an IAM Role
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2_s3_access_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
   tags = {
-    Name="web"
+    Name = "ec2_s3_access_role"
   }
 }
 
-resource "aws_lb_target_group" "tg" {
-  name     = "tf-example-lb-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.myvpc.id
-  health_check {
-    path = "/"
-    port = 80
-  }
+
+# Create an IAM Policy that allows access to the S3 bucket
+resource "aws_iam_policy" "s3_access_policy" {
+  name        = "s3_access_policy"
+  description = "Policy to allow access to the specific S3 bucket"
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:s3:::mantashaterraformbuckethaiye",
+          "arn:aws:s3:::mantashaterraformbuckethaiye/*"
+        ]
+      }
+    ]
+  })
 }
 
-resource "aws_lb_target_group_attachment" "tga1" {
-  target_group_arn = aws_lb_target_group.tg.arn
-  target_id        = aws_instance.ec2_1.id
-  port             = 80
-}
-resource "aws_lb_target_group_attachment" "tga2" {
-  target_group_arn = aws_lb_target_group.tg.arn
-  target_id        = aws_instance.ec2_2.id
-  port             = 80
+
+# Attach the Policy to the Role
+resource "aws_iam_role_policy_attachment" "role_policy_attachment" {
+  policy_arn = aws_iam_policy.s3_access_policy.arn
+  role     = aws_iam_role.ec2_role.name
 }
 
-resource "aws_lb_listener" "listen" {
-  load_balancer_arn = aws_lb.my_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.tg.arn
-  }
+# Attach the Role to EC2 Instances
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2_instance_profile"
+  role = aws_iam_role.ec2_role.name
 }
-output "loadbalancerdns" {
-    value = aws_lb.my_lb.dns_name
+
+
+
+
+
+# resource "aws_lb" "my_lb" {
+#   name               = "test-lb-tf"
+#   internal           = false
+#   load_balancer_type = "application"
+#   security_groups    = [aws_security_group.scg.id]
+#   subnets = [ aws_subnet.my_sb1, aws_subnet.my_sb2 ]
+#   tags = {
+#     Name="web"
+#   }
+# }
+
+# resource "aws_lb_target_group" "tg" {
+#   name     = "tf-example-lb-tg"
+#   port     = 80
+#   protocol = "HTTP"
+#   vpc_id   = aws_vpc.myvpc.id
+#   health_check {
+#     path = "/"
+#     port = 80
+#   }
+# }
+
+# resource "aws_lb_target_group_attachment" "tga1" {
+#   target_group_arn = aws_lb_target_group.tg.arn
+#   target_id        = aws_instance.ec2_1.id
+#   port             = 80
+# }
+# resource "aws_lb_target_group_attachment" "tga2" {
+#   target_group_arn = aws_lb_target_group.tg.arn
+#   target_id        = aws_instance.ec2_2.id
+#   port             = 80
+# }
+
+# resource "aws_lb_listener" "listen" {
+#   load_balancer_arn = aws_lb.my_lb.arn
+#   port              = "80"
+#   protocol          = "HTTP"
+
+#   default_action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.tg.arn
+#   }
+# }
+
+# output "loadbalancerdns" {
+#     value = aws_lb.my_lb.dns_name
   
-}
+# }
+
 
 
